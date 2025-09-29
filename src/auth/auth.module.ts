@@ -16,16 +16,16 @@ import { JwtStrategy } from './passport/jwt.stragety';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
-          global: true,
-          secretOrPrivateKey: configService.get<string>('JWT_SECET'),
-          signOptions: {
-            expiresIn: configService.get<string>('JWT_ACCESS_TOKEN_EXPIRED'),
-          },
+        global: true,
+        secretOrPrivateKey: configService.get<string>('JWT_SECET'),
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_ACCESS_TOKEN_EXPIRED'),
+        },
       }),
       inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService,LocalStrategy,JwtStrategy],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
 })
 export class AuthModule {}

@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -11,28 +15,36 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel(User.name) 
-    private userModel: Model<User>) {}
+    @InjectModel(User.name)
+    private userModel: Model<User>,
+  ) {}
 
-  isEmailExist = async(email: string) => {
-    const user =  await this.userModel.exists({email})
-    if(user) return true;
+  isEmailExist = async (email: string) => {
+    const user = await this.userModel.exists({ email });
+    if (user) return true;
     return false;
-  }
+  };
   async create(createUserDto: CreateUserDto) {
-    const {name, email, password,phone,address} = createUserDto;
+    const { name, email, password, phone, address } = createUserDto;
     const isExist = await this.isEmailExist(email);
-    if(isExist){
-      throw new BadRequestException(`Email ${email} đã tồn tại`)
+    if (isExist) {
+      // update message
+      throw new BadRequestException(`Email ${email} đã tồn tại`);
     }
+    // define type return of hashPasswordHelper
     const hashPassword = await hashPasswordHelper(password);
     const user = await this.userModel.create({
-      name,email,password: hashPassword,phone,address
-    })
-    return{
+      name,
+      email,
+      password: hashPassword,
+      phone,
+      address,
+    });
+    return {
+      // update message
       message: `Thêm thành công user`,
-      user
-    }
+      user,
+    };
   }
 
   async findAll() {
@@ -42,11 +54,13 @@ export class UsersService {
 
   async findOne(id: string) {
     if (!Types.ObjectId.isValid(id)) {
+      // update message
       throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
     }
 
-    const user = await this.userModel.findById(id) 
+    const user = await this.userModel.findById(id);
     if (!user) {
+      // update message
       throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
     }
 
@@ -58,51 +72,62 @@ export class UsersService {
       throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
     }
 
+    // why we need to declare this const
     const fieldsToUpdate = updateUserDto;
     const updatedUser = await this.userModel.findByIdAndUpdate(
       id,
       { $set: fieldsToUpdate },
-      { new: true }
+      { new: true },
     );
 
     if (!updatedUser) {
+      //update message
       throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
     }
 
     return {
+      //update message
       message: `Sửa thành công user`,
-      updatedUser
+      updatedUser,
     };
   }
 
   async remove(id: string) {
     if (!Types.ObjectId.isValid(id)) {
+      //update message
       throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
     }
     const deletedUser = await this.userModel.findByIdAndDelete(id);
     if (!deletedUser) {
+      //update message
       throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
     }
     return deletedUser;
   }
 
-  async findByEmail(email: string){
-    return await this.userModel.findOne({email});
+  async findByEmail(email: string) {
+    return await this.userModel.findOne({ email });
   }
 
-  async handleRegister(registerDto: CreateAuthDto){
-    const {name, email, password} = registerDto;
+  async handleRegister(registerDto: CreateAuthDto) {
+    const { name, email, password } = registerDto;
     const isExist = await this.isEmailExist(email);
-    if(isExist){
-      throw new BadRequestException(`Email ${email} đã tồn tại.Vui lòng sử dụng email khác`)
+    if (isExist) {
+      throw new BadRequestException(
+        //update message
+        `Email ${email} đã tồn tại.Vui lòng sử dụng email khác`,
+      );
     }
     const hashPassword = await hashPasswordHelper(password);
     const user = await this.userModel.create({
-      name,email,password: hashPassword
-    })
-    return{
+      name,
+      email,
+      password: hashPassword,
+    });
+    return {
+      //update message
       message: `Đăng ký thành công`,
-      user
-    }
+      user,
+    };
   }
 }

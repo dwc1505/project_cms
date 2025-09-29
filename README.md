@@ -1,4 +1,9 @@
+// Update this README in english later
 ## auth/dto: validate dữ liệu
+// Create dto for user input validation
+
+    - create-user.dto.ts: validate dữ liệu khi tạo user
+    - login.dto.ts: validate dữ liệu khi login
 
 ##  auth/passport: guard & strategy -> xác thực , phân quyền
 

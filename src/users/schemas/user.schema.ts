@@ -3,6 +3,7 @@ import { HydratedDocument } from 'mongoose';
 import { Role } from 'src/common/enums/role.enum';
 import { Status } from 'src/common/enums/status-active.enum';
 
+// remove if unused
 export type CatDocument = HydratedDocument<User>;
 
 @Schema({timestamps: true})

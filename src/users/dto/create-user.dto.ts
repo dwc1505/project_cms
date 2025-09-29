@@ -1,6 +1,7 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional } from "class-validator";
 import { Role } from "src/common/enums/role.enum";
 import { Status } from "src/common/enums/status-active.enum";
+// user single quotes or double quotes?
 
 export class CreateUserDto {
   @IsNotEmpty()
