@@ -5,32 +5,31 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { AuthController } from './auth/auth.controller';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/passport/jwt-auth.guard';
 
-
 @Module({
   imports: [
-      MongooseModule.forRootAsync({
-        imports: [ConfigModule],
-        useFactory: async (configService: ConfigService) => ({
-          uri: configService.get<string>('MONGODB_URI'),
-        }),
-        inject: [ConfigService],
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGODB_URI'),
       }),
-      ConfigModule.forRoot({
-        isGlobal: true,
-      }),
-      UsersModule,
-      AuthModule,
+      inject: [ConfigService],
+    }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
-  providers: [AppService,
+  providers: [
+    AppService,
     {
-    provide: APP_GUARD,
-    useClass: JwtAuthGuard,
-  },
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
 })
 export class AppModule {}

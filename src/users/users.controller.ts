@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { Public } from 'src/derector/customize';
@@ -6,7 +15,6 @@ import { RolesGuard } from 'src/auth/passport/roles.guard';
 import { Roles } from 'src/derector/role';
 import { Role } from 'src/common/enums/role.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
-
 
 @UseGuards(RolesGuard)
 @Controller('users')
@@ -16,7 +24,7 @@ export class UsersController {
   @Post()
   @Roles(Role.ADMIN)
   create(@Body() createUserDto: CreateUserDto) {
-    console.log("check: ",createUserDto)
+    console.log('check: ', createUserDto);
     return this.usersService.create(createUserDto);
   }
 

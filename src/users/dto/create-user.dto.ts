@@ -1,6 +1,6 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional } from "class-validator";
-import { Role } from "src/common/enums/role.enum";
-import { Status } from "src/common/enums/status-active.enum";
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
+import { Role } from 'src/common/enums/role.enum';
+import { Status } from 'src/common/enums/status-active.enum';
 
 export class CreateUserDto {
   @IsNotEmpty()
@@ -26,5 +26,4 @@ export class CreateUserDto {
   @IsOptional()
   @IsEnum(Status, { message: 'Status phải là active, inactive hoặc banned' })
   status?: Status;
-
 }

@@ -1,4 +1,3 @@
-
 import { Strategy } from 'passport-local';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
@@ -14,18 +13,20 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   async validate(email: string, password: string): Promise<any> {
     const user = await this.authService.validateUser(email, password);
     if (!user) {
-      throw new UnauthorizedException('Email/Password không hợp lệ');
+      throw new UnauthorizedException('Invalid email or password');
     }
 
-    switch (user.status) {
-      case Status.BANNED:
-        throw new UnauthorizedException('Tài khoản đã bị khóa');
-      case Status.INACTIVE:
-        throw new UnauthorizedException('Tài khoản chưa được kích hoạt');
-      case Status.ACTIVE:
-        return user;
-      default:
-        throw new UnauthorizedException('Trạng thái tài khoản không hợp lệ');
+    const messages = {
+      [Status.BANNED]: 'This account has been banned',
+      [Status.INACTIVE]: 'This account is not activated',
+    };
+
+    if (user.status === Status.ACTIVE) {
+      return user;
     }
+
+    throw new UnauthorizedException(
+      messages[user.status] || 'Invalid account status',
+    );
   }
 }

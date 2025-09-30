@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -11,28 +15,35 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectModel(User.name) 
-    private userModel: Model<User>) {}
+    @InjectModel(User.name)
+    private userModel: Model<User>,
+  ) {}
 
-  isEmailExist = async(email: string) => {
-    const user =  await this.userModel.exists({email})
-    if(user) return true;
+  isEmailExist = async (email: string) => {
+    const user = await this.userModel.exists({ email });
+    if (user) return true;
     return false;
-  }
+  };
   async create(createUserDto: CreateUserDto) {
-    const {name, email, password,phone,address} = createUserDto;
+    const { name, email, password, phone, address } = createUserDto;
     const isExist = await this.isEmailExist(email);
-    if(isExist){
-      throw new BadRequestException(`Email ${email} đã tồn tại`)
+    if (isExist) {
+      throw new BadRequestException(`Email ${email} already exists`);
     }
+
+    // define type return of hashPasswordHelper
     const hashPassword = await hashPasswordHelper(password);
     const user = await this.userModel.create({
-      name,email,password: hashPassword,phone,address
-    })
-    return{
-      message: `Thêm thành công user`,
-      user
-    }
+      name,
+      email,
+      password: hashPassword,
+      phone,
+      address,
+    });
+    return {
+      message: `User created successfully`,
+      user,
+    };
   }
 
   async findAll() {
@@ -42,12 +53,12 @@ export class UsersService {
 
   async findOne(id: string) {
     if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
+      throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    const user = await this.userModel.findById(id) 
+    const user = await this.userModel.findById(id);
     if (!user) {
-      throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
+      throw new NotFoundException(`User with id ${id} not found`);
     }
 
     return user;
@@ -55,54 +66,57 @@ export class UsersService {
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
+      throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    const fieldsToUpdate = updateUserDto;
     const updatedUser = await this.userModel.findByIdAndUpdate(
       id,
-      { $set: fieldsToUpdate },
-      { new: true }
+      { $set: updateUserDto },
+      { new: true },
     );
 
     if (!updatedUser) {
-      throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
+      throw new NotFoundException(`User with id ${id} not found`);
     }
 
     return {
-      message: `Sửa thành công user`,
-      updatedUser
+      message: `User updated successfully`,
+      updatedUser,
     };
   }
 
   async remove(id: string) {
     if (!Types.ObjectId.isValid(id)) {
-      throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
+      throw new NotFoundException(`User with id ${id} not found`);
     }
     const deletedUser = await this.userModel.findByIdAndDelete(id);
     if (!deletedUser) {
-      throw new NotFoundException(`Không tìm thấy user chứa id ${id}`);
+      throw new NotFoundException(`User with id ${id} not found`);
     }
     return deletedUser;
   }
 
-  async findByEmail(email: string){
-    return await this.userModel.findOne({email});
+  async findByEmail(email: string) {
+    return await this.userModel.findOne({ email });
   }
 
-  async handleRegister(registerDto: CreateAuthDto){
-    const {name, email, password} = registerDto;
+  async handleRegister(registerDto: CreateAuthDto) {
+    const { name, email, password } = registerDto;
     const isExist = await this.isEmailExist(email);
-    if(isExist){
-      throw new BadRequestException(`Email ${email} đã tồn tại.Vui lòng sử dụng email khác`)
+    if (isExist) {
+      throw new BadRequestException(
+        `Email ${email} already exists. Please use another email`,
+      );
     }
     const hashPassword = await hashPasswordHelper(password);
     const user = await this.userModel.create({
-      name,email,password: hashPassword
-    })
-    return{
-      message: `Đăng ký thành công`,
-      user
-    }
+      name,
+      email,
+      password: hashPassword,
+    });
+    return {
+      message: `User registered successfully`,
+      user,
+    };
   }
 }
