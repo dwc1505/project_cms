@@ -1,22 +1,25 @@
-## auth/dto: validate dữ liệu
+## auth/dto
+    - payload-auth.dto.ts: defines JWT payload -> helps RolesGuard and RolesPermissionsGuard access user info from token to check roles/permissions
 
-##  auth/passport: guard & strategy -> xác thực , phân quyền
+##  auth/passport: guard & strategy
 
-    - jwt-auth.guard.ts: kiểm tra token jwt, @Public() -> bỏ quia xác thực, xử lis lỗi token.
-    - jwt.strategy.ts: lấy token từ bearer, giải mã và trả về user.
-    - local.strategy.ts: xác thực email/password, kiểm tra status của user.
-    - roles.guard.ts: kiểm tra quyền role
+    - jwt-auth.guard.ts: checks token JWT, @Public() bypass, handles token errors   
+    - jwt.strategy.ts: extracts token from bearer, decodes it, returns user
+    - local.strategy.ts: validates email/password, checks user status
+    - roles.guard.ts:  checks role access
+    - roles-permissions.guard.ts: checks detailed resource, permissions
 
+## common/enums: defines shared enums (role, resource, permission, status)
 
-## common/enums: định nghĩa các enum dùng chung (role,status)
+## derector: set metadata
 
-## derector: set metadata cho route
+    - customize.ts: defines Public() -> bypass auth
+    - roles.ts: defines Roles() -> assign roles to routes  
+    - permissions: defines @Permissions()-> assign detailed permissions to routes, checked by guard
 
-    - customize.ts: định nghĩa public()->bỏ qua xác thực
-    - role.ts: định nghĩa roles()->phân quyền user  
+## helper
+    - util.ts: hash password & compare for login
 
-
-## helper: các hàm htrowj
-
-    - util.ts: hash mật khẩu và so sánh mk khi nhập login
-
+## user/dto
+    - create-user.dto.ts: validate data when cre user
+    - update-user.dto.ts: validate data when upd user

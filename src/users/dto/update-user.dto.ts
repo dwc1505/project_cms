@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional } from 'class-validator';
-import { Role } from 'src/common/enums/role.enum';
+import { Permission, Resource, Role } from 'src/common/enums/role.enum';
 import { Status } from 'src/common/enums/status-active.enum';
 
 export class UpdateUserDto {
@@ -21,4 +21,7 @@ export class UpdateUserDto {
     message: 'Status must be either active, inactive, or banned',
   })
   status?: Status;
+
+  @IsOptional()
+  permissions?: { resource: Resource; permissions: Permission[] }[];
 }

@@ -4,7 +4,7 @@ import { Status } from 'src/common/enums/status-active.enum';
 
 @Schema({ timestamps: true })
 export class User {
-  @Prop()
+  @Prop({ default: '' })
   name: string;
 
   @Prop()
@@ -13,10 +13,10 @@ export class User {
   @Prop()
   password: string;
 
-  @Prop()
+  @Prop({ default: '' })
   phone: string;
 
-  @Prop()
+  @Prop({ default: '' })
   address: string;
 
   @Prop({ enum: Role, default: Role.USER })
@@ -24,6 +24,13 @@ export class User {
 
   @Prop({ enum: Status, default: Status.ACTIVE })
   status: Status;
+
+  @Prop({
+    type: [{ resource: String, permissions: [String] }],
+    default: [],
+    _id: false,
+  })
+  permissions: { resource: string; permissions: string[] }[];
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

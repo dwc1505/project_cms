@@ -30,6 +30,7 @@ export class AuthService {
     const payload = new PayloadAuthDto(user);
     return {
       access_token: this.jwtService.sign({ ...payload }),
+      user: payload,
     };
   }
 
