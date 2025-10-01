@@ -4,6 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import { comparePasswordHelper } from 'src/helper/util';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { PayloadAuthDto } from './dto/payload-auth.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -36,5 +37,9 @@ export class AuthService {
 
   async handleRegister(registerDto: CreateAuthDto) {
     return await this.usersService.handleRegister(registerDto);
+  }
+
+  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
+    return this.usersService.verifyEmail(verifyEmailDto);
   }
 }

@@ -22,8 +22,14 @@ export class User {
   @Prop({ enum: Role, default: Role.USER })
   role: Role;
 
-  @Prop({ enum: Status, default: Status.ACTIVE })
+  @Prop({ enum: Status, default: Status.INACTIVE })
   status: Status;
+
+  @Prop({ type: Number, required: false })
+  otp?: number;
+
+  @Prop({ type: Date, required: false })
+  otpExpiresAt?: Date;
 
   @Prop({
     type: [{ resource: String, permissions: [String] }],
