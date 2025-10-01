@@ -5,6 +5,7 @@ import { comparePasswordHelper } from 'src/helper/util';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { PayloadAuthDto } from './dto/payload-auth.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { UpdateProfileDto } from 'src/auth/dto/update-profile.dto';
 
 @Injectable()
 export class AuthService {
@@ -41,5 +42,13 @@ export class AuthService {
 
   async verifyEmail(verifyEmailDto: VerifyEmailDto) {
     return this.usersService.verifyEmail(verifyEmailDto);
+  }
+
+  async getProfile(id: string) {
+    return this.usersService.findOne(id);
+  }
+
+  async updateProfile(id: string, updateProfileDto: UpdateProfileDto) {
+    return this.usersService.updateProfile(id, updateProfileDto);
   }
 }

@@ -14,6 +14,7 @@ import * as bcrypt from 'bcrypt';
 import { Status } from 'src/common/enums/status-active.enum';
 import { VerifyEmailDto } from 'src/auth/dto/verify-email.dto';
 import { CreateAuthDto } from 'src/auth/dto/create-auth.dto';
+import { UpdateProfileDto } from '../auth/dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -170,5 +171,22 @@ export class UsersService {
     await user.save();
 
     return { message: 'Email verified successfully' };
+  }
+
+  async updateProfile(id: string, updateProfileDto: UpdateProfileDto) {
+    const updatedUser = await this.userModel.findByIdAndUpdate(
+      id,
+      { $set: updateProfileDto },
+      { new: true },
+    );
+
+    if (!updatedUser) {
+      throw new NotFoundException(`User with id ${id} not found`);
+    }
+
+    return {
+      message: 'Profile updated successfully',
+      user: updatedUser,
+    };
   }
 }
