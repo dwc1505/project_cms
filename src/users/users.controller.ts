@@ -7,6 +7,7 @@ import {
   Param,
   Body,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -28,8 +29,8 @@ export class UsersController {
 
   @Get()
   @Permissions(Resource.USER, Permission.READ)
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query('page') page: number = 1, @Query('limit') limit: number = 3) {
+    return this.usersService.findAll(Number(page), Number(limit));
   }
 
   @Get(':id')

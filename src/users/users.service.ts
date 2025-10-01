@@ -46,9 +46,26 @@ export class UsersService {
     };
   }
 
-  async findAll() {
-    const users = await this.userModel.find();
-    return users;
+  async findAll(page: number = 1, limit: number = 3) {
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.userModel
+        .find()
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .exec(),
+      this.userModel.countDocuments().exec(),
+    ]);
+
+    return {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+      data
+    };
   }
 
   async findOne(id: string) {
