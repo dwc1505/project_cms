@@ -15,8 +15,9 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { RolesPermissionsGuard } from 'src/auth/passport/roles-permissions.guard';
 import { Resource, Permission } from 'src/common/enums/role.enum';
 import { Permissions } from 'src/derector/permissions';
+import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
 
-@UseGuards(RolesPermissionsGuard)
+@UseGuards(JwtAuthGuard, RolesPermissionsGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

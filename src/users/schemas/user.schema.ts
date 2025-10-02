@@ -32,7 +32,7 @@ export class User {
   otpExpiresAt?: Date;
 
   @Prop({
-    type: [{ resource: String, permissions: [String] }],
+    type: [{ resource: { type: String }, permissions: [String] }],
     default: [],
     _id: false,
   })
