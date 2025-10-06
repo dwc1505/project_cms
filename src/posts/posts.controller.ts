@@ -53,4 +53,23 @@ export class PostsController {
   remove(@Param('id') id: string) {
     return this.postsService.remove(id);
   }
+
+  @Post(':id/comment')
+  addComment(
+    @Param('id') postId: string,
+    @Request() req,
+    @Body('content') content: string,
+  ) {
+    return this.postsService.addComment(postId, req.user.sub, content);
+  }
+
+  @Post(':id/like')
+  like(@Param('id') postId: string, @Request() req) {
+    return this.postsService.likePost(postId, req.user.sub);
+  }
+
+  @Post(':id/dislike')
+  dislike(@Param('id') postId: string, @Request() req) {
+    return this.postsService.dislikePost(postId, req.user.sub);
+  }
 }

@@ -8,10 +8,14 @@ import { Model, Types } from 'mongoose';
 import { Post, PostDocument } from './schemas/post.schema';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { Comment, CommentDocument } from 'src/comments/schemas/comment.schema';
 
 @Injectable()
 export class PostsService {
-  constructor(@InjectModel(Post.name) private postModel: Model<PostDocument>) {}
+  constructor(
+    @InjectModel(Post.name) private postModel: Model<PostDocument>,
+    @InjectModel(Comment.name) private commentsModel: Model<CommentDocument>,
+  ) {}
 
   async create(createPostDto: CreatePostDto, authorId: string) {
     const { title, content } = createPostDto;
@@ -30,7 +34,15 @@ export class PostsService {
     const [data, total] = await Promise.all([
       this.postModel
         .find()
-        .populate('author', 'id name email')
+        .populate('author', 'email')
+        .populate({
+          path: 'comments',
+          select: 'content createdAt',
+          populate: { path: 'author', select: 'email' },
+          options: { sort: { createdAt: -1 } },
+        })
+        .populate('likes', 'email')
+        .populate('dislikes', 'email')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
@@ -50,7 +62,15 @@ export class PostsService {
   async findOne(id: string) {
     const post = await this.postModel
       .findById(id)
-      .populate('author', 'id name email');
+      .populate('author', 'email')
+      .populate({
+        path: 'comments',
+        select: 'content createdAt',
+        populate: { path: 'author', select: 'email' },
+        options: { sort: { createdAt: -1 } },
+      })
+      .populate('likes', 'email')
+      .populate('dislikes', 'email');
     if (!post) throw new NotFoundException('Post not found');
     return post;
   }
@@ -89,5 +109,74 @@ export class PostsService {
       message: 'Post deleted successfully',
       post,
     };
+  }
+
+  async addComment(postId: string, userId: string, content: string) {
+    const comment = await this.commentsModel.create({
+      post: postId,
+      author: userId,
+      content,
+    });
+
+    await this.postModel.findByIdAndUpdate(postId, {
+      $push: { comments: comment._id },
+    });
+
+    const comments = await this.commentsModel
+      .findById(comment._id)
+      .populate('author', 'email')
+      .lean();
+    return {
+      message: 'Comment successfully',
+      comments,
+    };
+  }
+
+  async likePost(postId: string, userId: string) {
+    const post = await this.postModel.findById(postId);
+    if (!post) throw new NotFoundException('Post not found');
+
+    post.dislikes = post.dislikes.filter((id) => id.toString() !== userId);
+
+    // Toggle like
+    if (post.likes.includes(userId as any)) {
+      post.likes = post.likes.filter((id) => id.toString() !== userId);
+    } else {
+      post.likes.push(userId as any);
+    }
+
+    await post.save();
+
+    return this.postModel
+      .findById(postId)
+      .populate('comments', 'content')
+      .populate('likes', 'email')
+      .populate('dislikes', 'email')
+      .lean()
+      .exec();
+  }
+
+  async dislikePost(postId: string, userId: string) {
+    const post = await this.postModel.findById(postId);
+    if (!post) throw new NotFoundException('Post not found');
+
+    post.likes = post.likes.filter((id) => id.toString() !== userId);
+
+    // Toggle dislike
+    if (post.dislikes.includes(userId as any)) {
+      post.dislikes = post.dislikes.filter((id) => id.toString() !== userId);
+    } else {
+      post.dislikes.push(userId as any);
+    }
+
+    await post.save();
+
+    return this.postModel
+      .findById(postId)
+      .populate('comments', 'content')
+      .populate('likes', 'email')
+      .populate('dislikes', 'email')
+      .lean()
+      .exec();
   }
 }

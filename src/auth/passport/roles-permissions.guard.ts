@@ -47,7 +47,10 @@ export class RolesPermissionsGuard implements CanActivate {
     // map resource id resource name
     const rolePermissions = await Promise.all(
       role.permissions.map(async (rolePerm) => {
-        const resource = await this.resourceModel.findById(rolePerm.resource).lean().exec();
+        const resource = await this.resourceModel
+          .findById(rolePerm.resource)
+          .lean()
+          .exec();
         return {
           resourceName: resource?.name,
           allowedActions: rolePerm.actions,
@@ -64,10 +67,11 @@ export class RolesPermissionsGuard implements CanActivate {
     }
 
     // Check if all required actions are allowed
-    const hasAllRequiredActions = requiredPermissions.permissions.every((action) =>
-      resourcePermission.allowedActions.includes(action),
+    const hasAllRequiredActions = requiredPermissions.permissions.every(
+      (action) => resourcePermission.allowedActions.includes(action),
     );
-    if (!hasAllRequiredActions) throw new ForbiddenException('Forbidden permission');
+    if (!hasAllRequiredActions)
+      throw new ForbiddenException('Forbidden permission');
 
     return true;
   }

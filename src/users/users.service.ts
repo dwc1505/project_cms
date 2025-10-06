@@ -100,7 +100,7 @@ export class UsersService {
 
       return {
         ...userObj,
-        roleId  ,
+        roleId,
         permissions,
       };
     });

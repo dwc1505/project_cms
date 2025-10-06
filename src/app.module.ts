@@ -10,6 +10,7 @@ import { JwtAuthGuard } from './auth/passport/jwt-auth.guard';
 import { PostsModule } from './posts/posts.module';
 import { RolesModule } from './roles/roles.module';
 import { ResourcesModule } from './resources/resources.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ResourcesModule } from './resources/resources.module';
     PostsModule,
     RolesModule,
     ResourcesModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [
