@@ -15,12 +15,15 @@ import { Status } from 'src/common/enums/status-active.enum';
 import { VerifyEmailDto } from 'src/auth/dto/verify-email.dto';
 import { CreateAuthDto } from 'src/auth/dto/create-auth.dto';
 import { UpdateProfileDto } from '../auth/dto/update-profile.dto';
+import { Role, RoleDocument } from 'src/roles/schemas/role.schema';
+import { generateOtp } from 'src/helper/otp';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectModel(User.name)
     private userModel: Model<User>,
+    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
   ) {}
 
   isEmailExist = async (email: string) => {
@@ -29,39 +32,78 @@ export class UsersService {
     return false;
   };
   async create(createUserDto: CreateUserDto) {
-    const { name, email, password, phone, address } = createUserDto;
-    const isExist = await this.isEmailExist(email);
-    if (isExist) {
-      throw new BadRequestException(`Email ${email} already exists`);
+    const exists = await this.userModel.findOne({ email: createUserDto.email });
+    if (exists) throw new BadRequestException('Email already exists');
+
+    const userRole = createUserDto.roleId
+      ? await this.roleModel.findById(createUserDto.roleId)
+      : await this.roleModel.findOne({ name: 'user' });
+
+    if (!userRole) {
+      throw new BadRequestException(
+        createUserDto.roleId
+          ? `Role with id ${createUserDto.roleId} not found`
+          : `Default role 'user' not found`,
+      );
     }
 
-    // define type return of hashPasswordHelper
-    const hashPassword = await hashPasswordHelper(password);
+    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+
     const user = await this.userModel.create({
-      name,
-      email,
-      password: hashPassword,
-      phone,
-      address,
+      ...createUserDto,
+      password: hashedPassword,
+      status: Status.ACTIVE,
+      roleId: userRole._id,
     });
+
+    await user.populate({ path: 'roleId', select: 'name' });
+
+    const { roleId: _, ...rest } = user.toObject();
+    const userObj = {
+      ...rest,
+      role: (user.roleId as any)?.name || null,
+    };
+
     return {
-      message: `User created successfully`,
-      user,
+      message: 'User created successfully',
+      user: userObj,
     };
   }
 
-  async findAll(page: number = 1, limit: number = 3) {
+  async findAll(page: number = 1, limit: number = 5) {
     const skip = (page - 1) * limit;
 
-    const [data, total] = await Promise.all([
+    const [users, total] = await Promise.all([
       this.userModel
         .find()
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
+        .populate({
+          path: 'roleId',
+          select: 'name permissions',
+          populate: { path: 'permissions.resource', select: 'name' },
+        })
         .exec(),
       this.userModel.countDocuments().exec(),
     ]);
+
+    const data = users.map((user) => {
+      const userObj = user.toObject() as any;
+      const roleId = userObj.roleId?.name || null;
+      const permissions =
+        (userObj.roleId?.permissions || []).map((p) => ({
+          resource: p.resource?.name,
+          actions: p.actions,
+        })) || [];
+      delete userObj.roleId;
+
+      return {
+        ...userObj,
+        roleId  ,
+        permissions,
+      };
+    });
 
     return {
       total,
@@ -77,12 +119,29 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    const user = await this.userModel.findById(id);
-    if (!user) {
-      throw new NotFoundException(`User with id ${id} not found`);
-    }
+    const user = await this.userModel.findById(id).populate({
+      path: 'roleId',
+      select: 'name permissions',
+      populate: { path: 'permissions.resource', select: 'name' },
+    });
 
-    return user;
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+
+    const userObj = user.toObject() as any;
+
+    const roleId = userObj.roleId?.name || null;
+    const permissions =
+      (userObj.roleId?.permissions || []).map((p) => ({
+        resource: p.resource?.name,
+        actions: p.actions,
+      })) || [];
+    delete userObj.roleId;
+
+    return {
+      ...userObj,
+      roleId,
+      permissions,
+    };
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -90,19 +149,23 @@ export class UsersService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
-    const updatedUser = await this.userModel.findByIdAndUpdate(
-      id,
-      { $set: updateUserDto },
-      { new: true },
-    );
+    const updatedUser = await this.userModel
+      .findByIdAndUpdate(id, { $set: updateUserDto }, { new: true })
+      .populate({ path: 'roleId', select: 'name' });
 
     if (!updatedUser) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
 
+    const { roleId: _, ...rest } = updatedUser.toObject();
+    const userObj = {
+      ...rest,
+      roleId: (updatedUser.roleId as any)?.name || null,
+    };
+
     return {
-      message: `User updated successfully`,
-      updatedUser,
+      message: 'User updated successfully',
+      user: userObj,
     };
   }
 
@@ -118,7 +181,7 @@ export class UsersService {
   }
 
   async findByEmail(email: string) {
-    return await this.userModel.findOne({ email });
+    return this.userModel.findOne({ email }).populate('roleId').exec();
   }
 
   async handleRegister({ name, email, password }: CreateAuthDto) {
@@ -127,8 +190,7 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // otp 6 digit - 5 minutes
-    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otp = generateOtp();
     const otpExpiresAt = new Date();
     otpExpiresAt.setMinutes(otpExpiresAt.getMinutes() + 5);
 

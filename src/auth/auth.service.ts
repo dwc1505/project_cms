@@ -29,7 +29,22 @@ export class AuthService {
   }
 
   async login(user: any) {
-    const payload = new PayloadAuthDto(user);
+    if (!user) {
+      throw new UnauthorizedException('Invalid user');
+    }
+
+    const rolePermissions = user.roleId?.permissions || [];
+    const roleId = user.roleId?._id || null;
+
+    const userData =
+      typeof user.toObject === 'function' ? user.toObject() : { ...user };
+
+    const payload = new PayloadAuthDto({
+      ...userData,
+      roleId,
+      permissions: rolePermissions,
+    });
+
     return {
       access_token: this.jwtService.sign({ ...payload }),
       user: payload,

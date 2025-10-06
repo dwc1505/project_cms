@@ -24,7 +24,7 @@ export class PostsService {
     return post.save();
   }
 
-  async findAll(page: number = 1, limit: number = 3) {
+  async findAll(page: number = 1, limit: number = 5) {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([

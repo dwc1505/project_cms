@@ -3,49 +3,71 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Role, RoleDocument } from 'src/roles/schemas/role.schema';
 import { PERMISSIONS_KEY } from 'src/derector/permissions';
-import { Role } from 'src/common/enums/role.enum';
+import { Action } from 'src/common/enums/role.enum';
+import {
+  Resource,
+  ResourceDocument,
+} from 'src/resources/schemas/resource.schema';
 
 @Injectable()
 export class RolesPermissionsGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  private readonly logger = new Logger(RolesPermissionsGuard.name);
 
-  canActivate(context: ExecutionContext): boolean {
-    const { user } = context.switchToHttp().getRequest();
+  constructor(
+    private reflector: Reflector,
+    @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
+    @InjectModel(Resource.name) private resourceModel: Model<ResourceDocument>,
+  ) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const req = context.switchToHttp().getRequest();
+    const user = req.user;
     if (!user) return false;
 
     const requiredPermissions = this.reflector.getAllAndOverride<{
       resource: string;
-      permissions: string[];
+      permissions: Action[];
     }>(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
-
     if (!requiredPermissions) return true;
 
-    if (user.role === Role.ADMIN) return true;
+    const role = user.roleId
+      ? await this.roleModel.findById(user.roleId).lean().exec()
+      : null;
+    if (!role) throw new ForbiddenException('Role not found');
 
-    const resourcePermissions = user.permissions?.find(
-      (r) =>
-        r.resource.toLowerCase() === requiredPermissions.resource.toLowerCase(),
+    if (role.name.toLowerCase() === 'admin') return true;
+
+    // map resource id resource name
+    const rolePermissions = await Promise.all(
+      role.permissions.map(async (rolePerm) => {
+        const resource = await this.resourceModel.findById(rolePerm.resource).lean().exec();
+        return {
+          resourceName: resource?.name,
+          allowedActions: rolePerm.actions,
+        };
+      }),
     );
 
-    if (
-      !resourcePermissions?.permissions ||
-      resourcePermissions.permissions.length === 0
-    ) {
+    // Find permission for the required resource
+    const resourcePermission = rolePermissions.find(
+      (perm) => perm.resourceName === requiredPermissions.resource,
+    );
+    if (!resourcePermission || resourcePermission.allowedActions.length === 0) {
       throw new ForbiddenException('No permissions for this resource');
     }
 
-    const requiredPerms = requiredPermissions.permissions.map((p) =>
-      p.toLowerCase(),
+    // Check if all required actions are allowed
+    const hasAllRequiredActions = requiredPermissions.permissions.every((action) =>
+      resourcePermission.allowedActions.includes(action),
     );
-    const userPerms = resourcePermissions.permissions.map((p) =>
-      p.toLowerCase(),
-    );
-
-    const hasPermission = requiredPerms.some((rp) => userPerms.includes(rp));
-    if (!hasPermission) throw new ForbiddenException('Forbidden permission');
+    if (!hasAllRequiredActions) throw new ForbiddenException('Forbidden permission');
 
     return true;
   }
