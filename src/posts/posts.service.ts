@@ -9,6 +9,7 @@ import { Post, PostDocument } from './schemas/post.schema';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Comment, CommentDocument } from 'src/comments/schemas/comment.schema';
+import { StatusPost } from 'src/common/enums/status-post';
 
 @Injectable()
 export class PostsService {
@@ -28,26 +29,42 @@ export class PostsService {
     return post.save();
   }
 
-  async findAll(page: number = 1, limit: number = 5) {
+  async findAll(
+    page: number = 1,
+    limit: number = 5,
+    authorId?: string,
+    statusPost?: StatusPost,
+  ) {
+    if (authorId && !Types.ObjectId.isValid(authorId)) {
+      throw new BadRequestException(`Invalid authorId: ${authorId}`);
+    }
+    if (statusPost && !Object.values(StatusPost).includes(statusPost)) {
+      throw new BadRequestException(`Invalid statusPost: ${statusPost}`);
+    }
     const skip = (page - 1) * limit;
+
+    const filter: any = {};
+    if (authorId) filter.author = authorId;
+    if (statusPost) filter.status = statusPost;
 
     const [data, total] = await Promise.all([
       this.postModel
-        .find()
-        .populate('author', 'email')
+        .find(filter)
+        .populate('author', 'name email status')
         .populate({
           path: 'comments',
           select: 'content createdAt',
-          populate: { path: 'author', select: 'email' },
           options: { sort: { createdAt: -1 } },
+          populate: { path: 'author', select: 'name email' },
         })
-        .populate('likes', 'email')
-        .populate('dislikes', 'email')
+        .populate('likes', 'name email')
+        .populate('dislikes', 'name email')
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
+        .lean()
         .exec(),
-      this.postModel.countDocuments().exec(),
+      this.postModel.countDocuments(filter).exec(),
     ]);
 
     return {
