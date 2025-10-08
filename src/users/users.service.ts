@@ -16,6 +16,7 @@ import { VerifyEmailDto } from 'src/auth/dto/verify-email.dto';
 import { CreateAuthDto } from 'src/auth/dto/create-auth.dto';
 import { UpdateProfileDto } from '../auth/dto/update-profile.dto';
 import { DEFAULT_PAGE, DEFAULT_PER_PAGE } from 'src/common/constants';
+import { generateOtp } from 'src/helper/otp';
 
 @Injectable()
 export class UsersService {
@@ -128,8 +129,7 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // otp 6 digit - 5 minutes
-    const otp = Math.floor(100000 + Math.random() * 900000);
+    const otp = generateOtp();
     const otpExpiresAt = new Date();
     otpExpiresAt.setMinutes(otpExpiresAt.getMinutes() + 5);
 
