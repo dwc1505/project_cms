@@ -10,6 +10,8 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { Comment, CommentDocument } from 'src/comments/schemas/comment.schema';
 import { StatusPost } from 'src/common/enums/status-post';
+import { DEFAULT_PAGE, DEFAULT_PER_PAGE } from 'src/helper/util';
+
 
 @Injectable()
 export class PostsService {
@@ -30,8 +32,8 @@ export class PostsService {
   }
 
   async findAll(
-    page: number = 1,
-    limit: number = 5,
+    page: number = DEFAULT_PAGE,
+    limit: number = DEFAULT_PER_PAGE,
     authorId?: string,
     statusPost?: StatusPost,
   ) {

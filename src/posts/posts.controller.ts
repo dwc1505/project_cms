@@ -19,6 +19,8 @@ import { RolesPermissionsGuard } from 'src/auth/passport/roles-permissions.guard
 import { Permissions } from 'src/derector/permissions';
 import { Action } from 'src/common/enums/role.enum';
 import { StatusPost } from 'src/common/enums/status-post';
+import { DEFAULT_PAGE, DEFAULT_PER_PAGE } from 'src/helper/util';
+
 
 @UseGuards(JwtAuthGuard, RolesPermissionsGuard)
 @Controller('posts')
@@ -34,8 +36,8 @@ export class PostsController {
   @Get()
   @Permissions('post', [Action.READ])
   findAll(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 5,
+    @Query('page') page: number = DEFAULT_PAGE,
+    @Query('limit') limit: number = DEFAULT_PER_PAGE,
     @Query('authorId') authorId?: string,
     @Query('statusPost') statusPost?: StatusPost,
   ) {
