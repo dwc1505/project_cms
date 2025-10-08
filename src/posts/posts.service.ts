@@ -8,6 +8,7 @@ import { Model, Types } from 'mongoose';
 import { Post, PostDocument } from './schemas/post.schema';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
+import { DEFAULT_PAGE, DEFAULT_PER_PAGE } from 'src/common/constants';
 
 @Injectable()
 export class PostsService {
@@ -24,7 +25,7 @@ export class PostsService {
     return post.save();
   }
 
-  async findAll(page: number = 1, limit: number = 3) {
+  async findAll(page: number = DEFAULT_PAGE, limit: number = DEFAULT_PER_PAGE) {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([

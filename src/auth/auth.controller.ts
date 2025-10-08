@@ -41,13 +41,12 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
-    const user = await this.authService.getProfile(req.user.id);
-    return user;
+    return this.authService.getProfile(req.user.sub);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('profile')
   updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
-    return this.authService.updateProfile(req.user.id, updateProfileDto);
+    return this.authService.updateProfile(req.user.sub, updateProfileDto);
   }
 }
