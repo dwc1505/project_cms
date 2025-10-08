@@ -18,6 +18,7 @@ import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
 import { RolesPermissionsGuard } from 'src/auth/passport/roles-permissions.guard';
 import { Permissions } from 'src/derector/permissions';
 import { Action } from 'src/common/enums/role.enum';
+import { DEFAULT_PAGE, DEFAULT_PER_PAGE } from 'src/helper/util';
 
 @UseGuards(JwtAuthGuard, RolesPermissionsGuard)
 @Controller('posts')
@@ -32,7 +33,7 @@ export class PostsController {
 
   @Get()
   @Permissions('post', [Action.READ])
-  findAll(@Query('page') page: number = 1, @Query('limit') limit: number = 5) {
+  findAll(@Query('page') page: number = DEFAULT_PAGE, @Query('limit') limit: number = DEFAULT_PER_PAGE) {
     return this.postsService.findAll(Number(page), Number(limit));
   }
 
