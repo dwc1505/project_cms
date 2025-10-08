@@ -25,26 +25,29 @@ export class RolesPermissionsGuard implements CanActivate {
 
     if (user.role === Role.ADMIN) return true;
 
-    const resourcePermissions = user.permissions?.find(
-      (r) =>
-        r.resource.toLowerCase() === requiredPermissions.resource.toLowerCase(),
+    const userResourcePermissions = user.permissions?.find(
+      (permission) =>
+        permission.resource.toLowerCase() === requiredPermissions.resource.toLowerCase(),
     );
 
     if (
-      !resourcePermissions?.permissions ||
-      resourcePermissions.permissions.length === 0
+      !userResourcePermissions?.permissions ||
+      userResourcePermissions.permissions.length === 0
     ) {
       throw new ForbiddenException('No permissions for this resource');
     }
 
-    const requiredPerms = requiredPermissions.permissions.map((p) =>
-      p.toLowerCase(),
+    const requiredPermissionNames = requiredPermissions.permissions.map((perm) =>
+      perm.toLowerCase(),
     );
-    const userPerms = resourcePermissions.permissions.map((p) =>
-      p.toLowerCase(),
+    const userPermissionNames = userResourcePermissions.permissions.map((perm) =>
+      perm.toLowerCase(),
     );
 
-    const hasPermission = requiredPerms.some((rp) => userPerms.includes(rp));
+    const hasPermission = requiredPermissionNames.some((perm) =>
+      userPermissionNames.includes(perm),
+    );
+    
     if (!hasPermission) throw new ForbiddenException('Forbidden permission');
 
     return true;
