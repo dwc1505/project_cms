@@ -16,6 +16,7 @@ import { RolesPermissionsGuard } from 'src/auth/passport/roles-permissions.guard
 import { Resource, Permission } from 'src/common/enums/role.enum';
 import { Permissions } from 'src/derector/permissions';
 import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
+import { DEFAULT_LIMIT, DEFAULT_PAGE } from 'src/common/constants';
 
 @UseGuards(JwtAuthGuard, RolesPermissionsGuard)
 @Controller('users')
@@ -30,7 +31,7 @@ export class UsersController {
 
   @Get()
   @Permissions(Resource.USER, Permission.READ)
-  findAll(@Query('page') page: number = 1, @Query('limit') limit: number = 3) {
+  findAll(@Query('page') page: number = DEFAULT_PAGE, @Query('limit') limit: number = DEFAULT_LIMIT) {
     return this.usersService.findAll(Number(page), Number(limit));
   }
 

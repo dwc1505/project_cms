@@ -15,6 +15,7 @@ import { Status } from 'src/common/enums/status-active.enum';
 import { VerifyEmailDto } from 'src/auth/dto/verify-email.dto';
 import { CreateAuthDto } from 'src/auth/dto/create-auth.dto';
 import { UpdateProfileDto } from '../auth/dto/update-profile.dto';
+import { DEFAULT_LIMIT, DEFAULT_PAGE } from 'src/common/constants';
 
 @Injectable()
 export class UsersService {
@@ -50,7 +51,7 @@ export class UsersService {
     };
   }
 
-  async findAll(page: number = 1, limit: number = 3) {
+  async findAll(page: number = DEFAULT_PAGE, limit: number = DEFAULT_LIMIT) {
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
