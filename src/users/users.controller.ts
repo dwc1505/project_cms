@@ -2,52 +2,53 @@ import {
   Controller,
   Get,
   Post,
-  Body,
   Patch,
-  Param,
   Delete,
+  Param,
+  Body,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { Public } from 'src/derector/customize';
-import { RolesGuard } from 'src/auth/passport/roles.guard';
-import { Roles } from 'src/derector/role';
-import { Role } from 'src/common/enums/role.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RolesPermissionsGuard } from 'src/auth/passport/roles-permissions.guard';
+import { Resource, Permission } from 'src/common/enums/role.enum';
+import { Permissions } from 'src/derector/permissions';
+import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
+import { DEFAULT_PAGE, DEFAULT_PER_PAGE } from 'src/common/constants';
 
-@UseGuards(RolesGuard)
+@UseGuards(JwtAuthGuard, RolesPermissionsGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @Roles(Role.ADMIN)
+  @Permissions(Resource.USER, Permission.CREATE)
   create(@Body() createUserDto: CreateUserDto) {
-    console.log('check: ', createUserDto);
     return this.usersService.create(createUserDto);
   }
 
   @Get()
-  @Public()
-  async findAll() {
-    return this.usersService.findAll();
+  @Permissions(Resource.USER, Permission.READ)
+  findAll(@Query('page') page: number = DEFAULT_PAGE, @Query('limit') limit: number = DEFAULT_PER_PAGE) {
+    return this.usersService.findAll(Number(page), Number(limit));
   }
 
   @Get(':id')
-  @Public()
+  @Permissions(Resource.USER, Permission.READ)
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN)
-  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return await this.usersService.update(id, updateUserDto);
+  @Permissions(Resource.USER, Permission.UPDATE)
+  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN)
+  @Permissions(Resource.USER, Permission.DELETE)
   remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }

@@ -5,12 +5,15 @@ import {
   Request,
   Get,
   Body,
+  Patch,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from './passport/jwt-auth.guard';
 import { Public } from 'src/derector/customize';
 import { CreateAuthDto } from './dto/create-auth.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { UpdateProfileDto } from 'src/auth/dto/update-profile.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -28,9 +31,22 @@ export class AuthController {
   register(@Body() registerDto: CreateAuthDto) {
     return this.authService.handleRegister(registerDto);
   }
+
+  @Post('verify-email')
+  @Public()
+  verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authService.verifyEmail(verifyEmailDto);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  async getProfile(@Request() req) {
+    return this.authService.getProfile(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('profile')
+  updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
+    return this.authService.updateProfile(req.user.sub, updateProfileDto);
   }
 }

@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY } from 'src/derector/role';
+import { ROLES_KEY } from 'src/derector/roles';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -23,7 +23,7 @@ export class RolesGuard implements CanActivate {
     const hasRole = requiredRoles.includes(user.role?.toLowerCase());
 
     if (!hasRole) {
-      throw new ForbiddenException('Không có quyền thực hiện');
+      throw new ForbiddenException('Forbidden resource');
     }
     return requiredRoles.includes(user.role);
   }
