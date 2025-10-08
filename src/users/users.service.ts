@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
-import { hashPasswordHelper } from 'src/helper/util';
+import { DEFAULT_PAGE,  DEFAULT_PER_PAGE} from 'src/helper/util';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { Status } from 'src/common/enums/status-active.enum';
@@ -70,7 +70,7 @@ export class UsersService {
     };
   }
 
-  async findAll(page: number = 1, limit: number = 5) {
+  async findAll(page: number = DEFAULT_PAGE, limit: number = DEFAULT_PER_PAGE) {
     const skip = (page - 1) * limit;
 
     const [users, total] = await Promise.all([
