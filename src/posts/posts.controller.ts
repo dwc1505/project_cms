@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post as HttpPost,
   Body,
   Param,
   Delete,
@@ -18,6 +17,7 @@ import { JwtAuthGuard } from 'src/auth/passport/jwt-auth.guard';
 import { RolesPermissionsGuard } from 'src/auth/passport/roles-permissions.guard';
 import { Permissions } from 'src/derector/permissions';
 import { Action } from 'src/common/enums/role.enum';
+import { StatusPost } from 'src/common/enums/status-post';
 import { DEFAULT_PAGE, DEFAULT_PER_PAGE } from 'src/helper/util';
 
 @UseGuards(JwtAuthGuard, RolesPermissionsGuard)
@@ -26,19 +26,34 @@ export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
   @Post()
-  @Permissions('post', [Action.CREATE])
+  // @Permissions('post', [Action.CREATE])
   create(@Request() req, @Body() createPostDto: CreatePostDto) {
     return this.postsService.create(createPostDto, req.user.sub);
   }
 
   @Get()
-  @Permissions('post', [Action.READ])
-  findAll(@Query('page') page: number = DEFAULT_PAGE, @Query('limit') limit: number = DEFAULT_PER_PAGE) {
-    return this.postsService.findAll(Number(page), Number(limit));
+  // @Permissions('post', [Action.READ])
+  findAll(
+    @Query('page') page: number = DEFAULT_PAGE,
+    @Query('limit') limit: number = DEFAULT_PER_PAGE,
+    @Query('authorId') authorId?: string,
+    @Query('statusPost') statusPost?: StatusPost,
+  ) {
+    return this.postsService.findAll(
+      Number(page),
+      Number(limit),
+      authorId,
+      statusPost,
+    );
+  }
+
+  @Get('reactions/sync')
+  async syncLikes() {
+    return this.postsService.syncLikesFromRedis();
   }
 
   @Get(':id')
-  @Permissions('post', [Action.READ])
+  // @Permissions('post', [Action.READ])
   findOne(@Param('id') id: string) {
     return this.postsService.findOne(id);
   }
@@ -53,5 +68,24 @@ export class PostsController {
   @Permissions('post', [Action.DELETE])
   remove(@Param('id') id: string) {
     return this.postsService.remove(id);
+  }
+
+  @Post(':id/comment')
+  addComment(
+    @Param('id') postId: string,
+    @Request() req,
+    @Body('content') content: string,
+  ) {
+    return this.postsService.addComment(postId, req.user.sub, content);
+  }
+
+  @Post(':id/like')
+  like(@Param('id') postId: string, @Request() req) {
+    return this.postsService.likePost(postId, req.user.sub);
+  }
+
+  @Post(':id/dislike')
+  dislike(@Param('id') postId: string, @Request() req) {
+    return this.postsService.dislikePost(postId, req.user.sub);
   }
 }

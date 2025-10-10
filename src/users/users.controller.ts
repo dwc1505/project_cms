@@ -31,7 +31,10 @@ export class UsersController {
 
   @Get()
   @Permissions('user', [Action.READ])
-  findAll(@Query('page') page: number = DEFAULT_PAGE, @Query('limit') limit: number = DEFAULT_PER_PAGE) {
+  findAll(
+    @Query('page') page: number = DEFAULT_PAGE,
+    @Query('limit') limit: number = DEFAULT_PER_PAGE,
+  ) {
     return this.usersService.findAll(Number(page), Number(limit));
   }
 

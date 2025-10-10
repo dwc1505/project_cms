@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Role, RoleDocument } from 'src/roles/schemas/role.schema';
 import { PERMISSIONS_KEY } from 'src/derector/permissions';
 import { Action } from 'src/common/enums/role.enum';
@@ -15,14 +15,14 @@ import {
   Resource,
   ResourceDocument,
 } from 'src/resources/schemas/resource.schema';
+import { Post, PostDocument } from 'src/posts/schemas/post.schema';
 
 @Injectable()
 export class RolesPermissionsGuard implements CanActivate {
-  private readonly logger = new Logger(RolesPermissionsGuard.name);
-
   constructor(
     private reflector: Reflector,
     @InjectModel(Role.name) private roleModel: Model<RoleDocument>,
+    @InjectModel(Post.name) private postModel: Model<PostDocument>,
     @InjectModel(Resource.name) private resourceModel: Model<ResourceDocument>,
   ) {}
 
@@ -37,6 +37,14 @@ export class RolesPermissionsGuard implements CanActivate {
     }>(PERMISSIONS_KEY, [context.getHandler(), context.getClass()]);
     if (!requiredPermissions) return true;
 
+    const postId = req.params.id;
+    if (postId && Types.ObjectId.isValid(postId)) {
+      const post = await this.postModel.findById(postId).lean();
+      if (post && post.author.toString() === user.sub) {
+        return true;
+      }
+    }
+
     const role = user.roleId
       ? await this.roleModel.findById(user.roleId).lean().exec()
       : null;
@@ -47,7 +55,10 @@ export class RolesPermissionsGuard implements CanActivate {
     // map resource id resource name
     const rolePermissions = await Promise.all(
       role.permissions.map(async (rolePerm) => {
-        const resource = await this.resourceModel.findById(rolePerm.resource).lean().exec();
+        const resource = await this.resourceModel
+          .findById(rolePerm.resource)
+          .lean()
+          .exec();
         return {
           resourceName: resource?.name,
           allowedActions: rolePerm.actions,
@@ -64,10 +75,11 @@ export class RolesPermissionsGuard implements CanActivate {
     }
 
     // Check if all required actions are allowed
-    const hasAllRequiredActions = requiredPermissions.permissions.every((action) =>
-      resourcePermission.allowedActions.includes(action),
+    const hasAllRequiredActions = requiredPermissions.permissions.every(
+      (action) => resourcePermission.allowedActions.includes(action),
     );
-    if (!hasAllRequiredActions) throw new ForbiddenException('Forbidden permission');
+    if (!hasAllRequiredActions)
+      throw new ForbiddenException('Forbidden permission');
 
     return true;
   }

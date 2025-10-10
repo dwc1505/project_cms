@@ -8,7 +8,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { User } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
-import { DEFAULT_PAGE, DEFAULT_PER_PAGE, hashPasswordHelper } from 'src/helper/util';
+import { DEFAULT_PAGE, DEFAULT_PER_PAGE } from 'src/helper/util';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { Status } from 'src/common/enums/status-active.enum';
@@ -100,7 +100,7 @@ export class UsersService {
 
       return {
         ...userObj,
-        roleId  ,
+        roleId,
         permissions,
       };
     });
