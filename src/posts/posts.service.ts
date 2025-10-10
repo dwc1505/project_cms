@@ -247,68 +247,66 @@ export class PostsService {
   }
 
   async syncLikesFromRedis() {
-    const keys = await this.redis.keys('post:*:likes');
+    const posts = (await this.postModel.find().select('likes dislikes')) as {
+      id: Types.ObjectId;
+      likes: Types.ObjectId[];
+      dislikes: Types.ObjectId[];
+    }[];
     const updatedResults: {
       postId: string;
       likes: number;
       dislikes: number;
     }[] = [];
 
-    for (const key of keys) {
-      const postId = key.split(':')[1];
+    await Promise.all(
+      posts.map(async (post) => {
+        const postId = post.id.toString();
 
-      const [likeIds, dislikeIds] = await Promise.all([
-        this.redis.smembers(`post:${postId}:likes`),
-        this.redis.smembers(`post:${postId}:dislikes`),
-      ]);
+        // get likes and dislikes from redis cache
+        const [likeIds, dislikeIds] = await Promise.all([
+          this.redis.smembers(`post:${postId}:likes`).catch(() => []),
+          this.redis.smembers(`post:${postId}:dislikes`).catch(() => []),
+        ]);
 
-      const likeObjs = likeIds.map((id) => new Types.ObjectId(id));
-      const dislikeObjs = dislikeIds.map((id) => new Types.ObjectId(id));
+        const toObjectIds = (ids: string[]) =>
+          ids.map((id) => new Types.ObjectId(id));
+        const likeObjs = toObjectIds(likeIds);
+        const dislikeObjs = toObjectIds(dislikeIds);
 
-      const post = await this.postModel
-        .findById(postId)
-        .select('likes dislikes');
+        const toStringSet = (arr: any[]) =>
+          new Set(arr.map((id) => id.toString()));
+        const dbLikeSet = toStringSet(post.likes);
+        const dbDislikeSet = toStringSet(post.dislikes);
+        const redisLikeSet = new Set(likeIds);
+        const redisDislikeSet = new Set(dislikeIds);
 
-      if (!post) continue;
+        // compare db likes/dislikes with redis
+        const likesChange =
+          dbLikeSet.size !== redisLikeSet.size ||
+          [...dbLikeSet].some((id) => !redisLikeSet.has(id));
+        const dislikesChange =
+          dbDislikeSet.size !== redisDislikeSet.size ||
+          [...dbDislikeSet].some((id) => !redisDislikeSet.has(id));
 
-      const dbLikeIds = post.likes.map((id) => id.toString());
-      const dbDislikeIds = post.dislikes.map((id) => id.toString());
+        if (likesChange || dislikesChange) {
+          await this.postModel.findByIdAndUpdate(postId, {
+            likes: likeObjs,
+            dislikes: dislikeObjs,
+            likeCount: likeObjs.length,
+            dislikeCount: dislikeObjs.length,
+          });
 
-      const likesChange =
-        dbLikeIds.length !== likeObjs.length ||
-        !dbLikeIds.every((id) =>
-          likeObjs.map((o) => o.toString()).includes(id),
-        );
+          updatedResults.push({
+            postId,
+            likes: likeObjs.length,
+            dislikes: dislikeObjs.length,
+          });
+        }
+      }),
+    );
 
-      const dislikesChange =
-        dbDislikeIds.length !== dislikeObjs.length ||
-        !dbDislikeIds.every((id) =>
-          dislikeObjs.map((o) => o.toString()).includes(id),
-        );
-
-      if (likesChange || dislikesChange) {
-        await this.postModel.findByIdAndUpdate(postId, {
-          likes: likeObjs,
-          dislikes: dislikeObjs,
-          likeCount: likeObjs.length,
-          dislikeCount: dislikeObjs.length,
-        });
-
-        updatedResults.push({
-          postId,
-          likes: likeObjs.length,
-          dislikes: dislikeObjs.length,
-        });
-      }
-    }
-
-    if (updatedResults.length === 0) {
-      return { message: 'No posts updated' };
-    }
-
-    return {
-      message: 'Sync to db complete',
-      results: updatedResults,
-    };
+    return updatedResults.length
+      ? { message: 'Sync complete', results: updatedResults }
+      : { message: 'No posts updated' };
   }
 }
