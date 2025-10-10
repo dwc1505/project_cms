@@ -268,17 +268,16 @@ export class PostsService {
           this.redis.smembers(`post:${postId}:dislikes`).catch(() => []),
         ]);
 
-        const toObjectIds = (ids: string[]) =>
-          ids.map((id) => new Types.ObjectId(id));
-        const likeObjs = toObjectIds(likeIds);
-        const dislikeObjs = toObjectIds(dislikeIds);
+        const [likeObjs, dislikeObjs] = [likeIds, dislikeIds].map((ids) =>
+          ids.map((id) => new Types.ObjectId(id)),
+        );
 
-        const toStringSet = (arr: any[]) =>
-          new Set(arr.map((id) => id.toString()));
-        const dbLikeSet = toStringSet(post.likes);
-        const dbDislikeSet = toStringSet(post.dislikes);
-        const redisLikeSet = new Set(likeIds);
-        const redisDislikeSet = new Set(dislikeIds);
+        const [dbLikeSet, dbDislikeSet, redisLikeSet, redisDislikeSet] = [
+          post.likes,
+          post.dislikes,
+          likeIds,
+          dislikeIds,
+        ].map((ids) => new Set(ids.map?.((id) => id.toString()) || ids));
 
         // compare db likes/dislikes with redis
         const likesChange =
