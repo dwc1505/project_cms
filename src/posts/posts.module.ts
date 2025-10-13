@@ -6,6 +6,7 @@ import { Post, PostSchema } from './schemas/post.schema';
 import { Comment, CommentSchema } from 'src/comments/schemas/comment.schema';
 import { PostQueueModule } from './post-queue.module';
 import { RolesModule } from 'src/roles/roles.module';
+import { PostsScheduler } from './posts.scheduler';
 
 @Module({
   imports: [
@@ -17,7 +18,7 @@ import { RolesModule } from 'src/roles/roles.module';
     forwardRef(() => PostQueueModule),
   ],
   controllers: [PostsController],
-  providers: [PostsService],
+  providers: [PostsService, PostsScheduler],
   exports: [PostsService],
 })
 export class PostsModule {}

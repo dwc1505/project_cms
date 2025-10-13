@@ -12,6 +12,7 @@ import { RolesModule } from './roles/roles.module';
 import { ResourcesModule } from './resources/resources.module';
 import { CommentsModule } from './comments/comments.module';
 import { RedisModule } from './redis/redis.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { RedisModule } from './redis/redis.module';
     ResourcesModule,
     CommentsModule,
     RedisModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [
