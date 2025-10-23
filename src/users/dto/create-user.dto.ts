@@ -1,5 +1,10 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
-import { Role } from 'src/common/enums/role.enum';
+import {
+  IsEmail,
+  IsEnum,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 import { Status } from 'src/common/enums/status-active.enum';
 
 export class CreateUserDto {
@@ -19,11 +24,13 @@ export class CreateUserDto {
   @IsOptional()
   address?: string;
 
-  @IsEnum(Role)
   @IsOptional()
-  role?: Role;
+  @IsMongoId()
+  roleId?: string;
 
   @IsOptional()
-  @IsEnum(Status, { message: 'Status phải là active, inactive hoặc banned' })
+  @IsEnum(Status, {
+    message: 'Status must be either active, inactive or banned',
+  })
   status?: Status;
 }

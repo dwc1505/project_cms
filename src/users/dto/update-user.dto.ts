@@ -1,5 +1,4 @@
-import { IsEnum, IsOptional } from 'class-validator';
-import { Permission, Resource, Role } from 'src/common/enums/role.enum';
+import { IsEnum, IsMongoId, IsOptional } from 'class-validator';
 import { Status } from 'src/common/enums/status-active.enum';
 
 export class UpdateUserDto {
@@ -12,16 +11,13 @@ export class UpdateUserDto {
   @IsOptional()
   address?: string;
 
-  @IsEnum(Role)
   @IsOptional()
-  role?: Role;
+  @IsMongoId()
+  roleId?: string;
 
   @IsOptional()
   @IsEnum(Status, {
     message: 'Status must be either active, inactive, or banned',
   })
   status?: Status;
-
-  @IsOptional()
-  permissions?: { resource: Resource; permissions: Permission[] }[];
 }
